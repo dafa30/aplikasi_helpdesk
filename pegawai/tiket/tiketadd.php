@@ -1,0 +1,158 @@
+<?php
+  require_once __DIR__ . '/../../koneksi.php';
+  if (session_status() !== PHP_SESSION_ACTIVE) {
+    session_start();
+  }
+  $IdUser = $_SESSION['IdUser'] ?? '';
+
+  if(isset($_POST['tambah'])) {
+    $ambil_admin = mysqli_query($koneksi, "SELECT IdUser FROM tbl_user WHERE IdUser='$IdUser'");
+    $data_admin = mysqli_fetch_array($ambil_admin);
+
+    $KodeTiket  = $_POST['KodeTiket'];
+    $Tanggal    = $_POST['Tanggal'];
+    $IdTeknisi  = $_POST['IdTeknisi'];
+    $StatusTiket     = $_POST['StatusTiket'];
+    $Keterangan = $_POST['Keterangan'];
+
+    $query = "INSERT INTO tbl_tiket VALUES('$KodeTiket',
+                                            '$Tanggal',
+                                            '$IdTeknisi',
+                                            '$StatusTiket',
+                                            '$Keterangan')";
+    $simpan = mysqli_query($koneksi, $query) or die (mysqli_connect_error());
+	  if($simpan) { ?>
+<script>
+  alert("Data Tiket berhasil ditambahkan!");
+  document.location = "pegawai.php?id=tiketlist";
+</script> <?php
+    }
+  }
+  else if(isset($_POST['batal'])) { ?>
+<script>
+  document.location = "pegawai.php?id=tiketlist";
+</script> <?php
+  }
+?>
+
+<script type="text/javascript">
+  function validasi_input(form) {
+    if (form.KodeTiket.value == "") {
+      alert("Kode Tiket tidak boleh kosong!");
+      form.KodeTiket.focus();
+      return false;
+    }
+    if (form.Tanggal.value == "") {
+      alert("Tanggal Tiket tidak boleh kosong!");
+      form.Tanggal.focus();
+      return false;
+    }
+    if (form.IdTeknisi.value == "") {
+      alert("IdTeknisi Tiket tidak boleh kosong!");
+      form.IdTeknisi.focus();
+      return false;
+    }
+    if (form.StatusTiket.value == "") {
+      alert("Status Tiket tidak boleh kosong!");
+      form.StatusTiket.focus();
+      return false;
+    }
+    if (form.Keterangan.value == "") {
+      alert("Keterangan Tiket tidak boleh kosong!");
+      form.Keterangan.focus();
+      return false;
+    }
+    return true;
+  }
+</script>
+
+<section id="main-content">
+  <section class="wrapper">
+    <div class="row">
+      <div class="col-lg-12">
+        <h3 class="page-header"><i class="fa fa-laptop"></i> Data Tiket</h3>
+        <ul class="breadcrumb">
+          <li><i class="fa fa-home"></i><a href="pegawai.php">Home</a></li>
+          <li><i class="fa fa-laptop"></i><a href="pegawai.php?id=tiketlist">List Data Tiket</a></li>
+          <li><i class="fa fa-file-text-o"></i>Add Data Tiket</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+        <div class="panel panel-default">
+          <div class="panel-body">
+            <form class="form-horizontal " method="POST" onsubmit="return validasi_input(this);">
+              <div class="form-group">
+                <label class="col-sm-2 control-label">Kode Tiket</label>
+                <div class="col-sm-9">
+                  <?php
+                    $query_kdauto = "SELECT max(KodeTiket) as maxKode FROM tbl_tiket";
+                    $hasil_kdauto = mysqli_query($koneksi,$query_kdauto);
+                    $data_kdauto = mysqli_fetch_array($hasil_kdauto);
+                    $kodeTiket = $data_kdauto['maxKode'];
+                    $noUrut = (int) substr($kodeTiket, 3, 5);
+                    $noUrut++;
+                    $char = "HLP";
+                    $kode = $char.sprintf("%05s",$noUrut);
+                  ?>
+                  <input type="text" name="KodeTiket" value="<?php echo $kode;?>" maxlength="10" class="form-control">
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="col-sm-2 control-label">Tanggal</label>
+                <div class="col-sm-9">
+                  <?php
+                    date_default_timezone_set('ASIA/JAKARTA'); 
+                    $date = date('d-m-Y');
+                  ?>
+                  <input type="text" name="Tanggal" value="<?php echo $date;?>" class="form-control tanggal">
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="col-sm-2 control-label">Nama Teknisi</label>
+                <div class="col-sm-9">
+                  <select class="custom-select form-control" name="IdTeknisi">
+                    <option value="">== Pilih Teknisi ==</option>
+                    <?php
+                      $ambil_teknisi = mysqli_query($koneksi, "SELECT IdTeknisi, NamaTeknisi FROM tbl_teknisi ORDER BY IdTeknisi");
+                      while($data_teknisi = mysqli_fetch_array($ambil_teknisi)){ ?>
+                    <option value="<?php echo $data_teknisi[0];?>"><?php echo strtoupper($data_teknisi[1]);?></option>
+                    <?php } ?>
+                  </select>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="col-sm-2 control-label">Status Tiket</label>
+                <div class="col-sm-9">
+                  <select class="custom-select form-control" name="StatusTiket" id="StatusTiket">
+                    <option value="">== Pilih Status ==</option>
+                    <option value="Rejected">Rejected</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="col-sm-2 control-label">Keterangan Tiket</label>
+                <div class="col-sm-9">
+                  <input type="text" name="Keterangan" maxlength="1000" class="form-control">
+                </div>
+              </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="col-sm-10 control-label"></label>
+          <input type="submit" name="tambah" value="Simpan" class="btn btn-primary form control">
+          <input type="button" onclick="document.location='pegawai.php?id=tiketlist'" name="batal" value="Batal"
+            class="btn btn-danger form control">
+          </label>
+        </div>
+        </form>
+      </div>
+    </div>
+    </div>
+    </div>
+  </section> <!-- wrapper -->
+</section> <!-- main-content -->
+<br><br><br><br><br>
+<?php include "./layout/footer.php"; ?>
